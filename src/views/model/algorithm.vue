@@ -57,10 +57,17 @@
                     </template>
                     </el-table-column>
                 </el-table>
+                <div class="pagination">
+                <el-pagination layout="prev, pager, next" :page-size="2" :total="total" :current-page.sync="currentPage"
+                    @current-change="pageChange">
+                </el-pagination>
+                </div>
             </el-card>
                 </el-col>
             </el-row>
+             
         </el-card>
+
     </div>
 </template>
 <script>
@@ -100,18 +107,17 @@ export default{
         **/
         addAlgorithm(){
             // this.$refs.algorithmForm.validate(valid=>{
+            //     this.dialogVisible = false
+            //     console.log(valid)
+            //     if(valid){
+                this.dialogVisible = false
                 const fd=new FormData()
                 fd.append('file',this.file)
-                fd.append('algorithmName',this.algorithm.algorithmName)
-                fd.append('algorithmDescription',this.algorithm.algorithmDescription)
+                Object.keys(this.algorithm).forEach(keys=>fd.append(keys,this.algorithm[keys]))
                 algorithmUpload(fd)
-                
-                // if(valid){
-
-                // }
-                // else{
-
-                // }
+                this.queryModelList()
+                this.$router.push({})
+            //     }
             // })
         },
         /**
@@ -185,11 +191,22 @@ export default{
 
 </script>
 <style scoped>
-    .file-upload{
+.el-card:nth-child(1){
+    position: relative;
+}
+.file-upload{
         display: flex;
-    }
+}
+.pagination {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  right: 0%;
+  bottom: 1%;
+}
 
-    .data-set-card {
+
+.data-set-card {
   width: 100%;
   height: 400px;
   padding: 20px;

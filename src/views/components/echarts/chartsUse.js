@@ -1,17 +1,21 @@
-import * as echrats from 'echarts'
+import * as echarts from 'echarts'
+import ecStat from 'echarts-stat'
+
+echarts.registerTransform(ecStat.transform.clustering)
 
 export default function useCharts(){
-
-    let charts=null
+   
 
     function chartsInit(element,option){
         if(element&&option){
-            charts=echrats.init(element)
+            const charts=echarts.init(element)
             charts.setOption(option)
+            return charts
         }
+        return null
     }
 
-    function setChartsOption(option,flag){
+    function setChartsOption(charts,option,flag){
         if(flag&&charts)
             //清空画布
             charts.clear()

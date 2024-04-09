@@ -4,38 +4,32 @@
           <el-dialog
             title="数据上传"
             :visible.sync="dialogVisible"
-            width="30%"
+            width="28%"
             :before-close="handleClose"
             label-width="80px">
-            <el-form ref="form" :model="form">
-            <el-form-item label="文件名称">
-                <el-input v-model="form.filename"></el-input>
+            <el-form ref="form" :model="form" :rules="rules" label-width="90px">
+            <el-form-item label="文件名称" prop="filename">
+              <div class="file-container">
+                <el-input v-model="form.filename" disabled></el-input>
                 <el-upload class="upload-demo" ref="upload" action="" :file-list="fileList" accpet=".csv" :auto-upload="true"
                     limit="1" :http-request="handleUpload" :show-file-list="false">
                     <el-button slot="trigger" type="primary" icon="el-icon-plus" :disabled="uploading">选择文件</el-button>
                 </el-upload> 
+              </div>
             </el-form-item>
-            <el-form-item label="文件备注">
-                <el-input v-model="form.desc"></el-input>
-            </el-form-item>
-            <el-form-item>
-                <el-button type="primary" @click="onSubmit">立即创建</el-button>
-                <el-button>取消</el-button>
+            <el-form-item label="文件备注" prop="desc">
+                <el-input type="textarea" v-model="form.desc"></el-input>
             </el-form-item>
           </el-form>
           <span slot="footer" class="dialog-footer">
-          <el-button @click="dialogVisible = false">取 消</el-button>
-          <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+          <el-button @click="cancelUpload">取 消</el-button>
+          <el-button type="primary" @click="submitUpload">确 定</el-button>
           </span>
       </el-dialog>
       <div class="operation">
         <el-row>
           <el-col :span="8">
-            <!-- <el-upload class="upload-demo" ref="upload" action="" :file-list="fileList" accpet=".csv" :auto-upload="true"
-              limit="1" :http-request="handleUpload" :show-file-list="false">
-              <el-button slot="trigger" type="primary" icon="el-icon-plus" :disabled="uploading">导入测试集</el-button> -->
-              <el-button type="primary" icon="el-icon-plus" @click="dialogVisible=true">导入测试集</el-button>
-            <!-- </el-upload> -->
+              <el-button type="primary" icon="el-icon-plus" @click="dialogVisible=true">文件上传</el-button>
           </el-col>
             <el-col :span="14" :offset="0" class="text-right">
                 <div class="flex-container">
@@ -49,7 +43,7 @@
                         align="right"
                         style="margin-right: 200px;"
                     ></el-date-picker>
-                    <el-input placeholder="搜索数据集" v-model="filename" class="input-with-select">
+                    <el-input placeholder="搜索数据集" v-model="filename" class="search">
                       <el-button slot="append" icon="el-icon-search" @click="queryTrainsetData"> </el-button>
                     </el-input>
                 </div>
@@ -85,10 +79,16 @@
                   {{ scope.row.size }}KB
               </template>
             </el-table-column>
+            <el-table-column label="备注" prop="size" align="center">
+              <template slot-scope="scope">
+                  <span v-if="Object.is(scope.row.fill_type,null)">暂无</span>
+                  <span v-else>{{ scope.row.fill_type }}</span>
+              </template>
+            </el-table-column>
             <!-- <el-table-column label="备注" prop="fill_type" align="center"></el-table-column> -->
             <el-table-column align="center" label="操作">
               <template slot-scope="scope">
-                <el-button type="text" @click="getTrainSet(scope.row)">下载</el-button>
+                <!-- <el-button type="text" @click="getTrainSet(scope.row)">下载</el-button> -->
                 <el-button type="text" @click="dealFile(scope.row)">处理</el-button>
                 <el-button type="text" @click="deleteTrainData(scope.row)">删除</el-button>
               </template>
@@ -108,7 +108,6 @@
     </el-row>
   </div>
         </el-card>
-        
     </div>
 </template>
 <script>
@@ -116,12 +115,12 @@
 
 //依赖引入
 import { getUserUploadTestSet, getClassifiedResult, queryTestSet, deleteTestSet } from '@/api/file'
-import { getToken } from '@/utils/auth'
 import { setFilePath, setLastRouter, setTestBegin, getTestBegin } from '@/utils/rechangeInfo'
 import saveJson from 'file-saver'
 import FileSaver from 'file-saver'
 import XLSX from 'xlsx'
 import { getTrainData,uploadData,queryData,deleteFile} from '@/api/data'
+
 
 export default {
 
@@ -131,16 +130,19 @@ export default {
     },
     data() {
         return {
+          rules:{
+            filename:[
+              {required:true}
+            ],
+            desc:[
+              {required:true}
+            ]
+          },
           form: {
               filename: '',
-              region: '',
-              date1: '',
-              date2: '',
-              delivery: false,
-              type: [],
-              resource: '',
               desc: ''
-            },
+          },
+          file:'',
             filename:'',
             dialogVisible:false,
             dataName:'',
@@ -205,11 +207,56 @@ export default {
   },
   
     methods: {
+      /**
+        * 处理上传
+        * @param
+      **/
+      handleUpload(params){
+        const file=params.file
+        this.form.filename=file.name
+        this.file=file
+      },
+      /**
+      * 提交上传文件
+      * @param
+      **/
+      submitUpload(){
+        this.dialogVisible = false
+        const fd=new FormData()
+        fd.append('file',this.file)
+        uploadData(fd).then(res=>{
+          this.form={
+            filename:'',desc:''
+          }
+          const {data:{status}}=res
+          if(status==200){
+            this.getTrainData()
+            this.$message.success('上传成功')
+          }
+        }).catch(error=>
+          this.form={
+            filename:'',desc:''
+          }
+      )
+      },
+      /**
+      * 取消上传
+      * @param
+      **/
+      cancelUpload(){
+        this.dialogVisible = false
+        this.file=''
+        this.form={
+          filename:'',desc:''
+        }
+      },
+
+
       //获取训练数据
       getTrainData(){
         getTrainData().then(res=>{
-        this.dataSet=res.data.trainList
-        console.log(this.dataSet)
+          this.dataSet=res.data.trainList
+          console.log(this.dataSet)
         })
       },
       queryTrainsetData(){
@@ -290,39 +337,40 @@ export default {
 
 
 
-    //上传验证集
-    handleUpload(params) {
-      this.form.filename=params.file.name
-      
-      // this.$notify.info({
-      //   title: '提示',
-      //   dangerouslyUseHTMLString: true,
-      //   message: '<div style="color:#409EFF;"><i class="el-icon-loading"></i>上传中请耐心等待</div>',
-      //   showClose: false,
-      //   duration: 0
-      // });
-      // this.uploading = true
-      // const file = params.file
-      // const formData = new FormData()
-      // formData.append('file', file)
-      // uploadData(formData).then(res=>{
-      //   this.$notify.closeAll()
-      //   this.getTrainData()
-      // })
-      // uploadVerifySet(formData).then(res => {
-      //   //不管是否上传成功都关闭
-      //   this.$notify.closeAll()
-      //   const { code } = res.data
-      //   if (code == 1) {
-      //     this.uploading = false
-      //     this.$message.success('文件上传成功')
-      //     this.$refs.upload.clearFiles()
-      //   }
-      //   else {
-      //     this.$message.error('文件上传失败')
-      //   }
-      // })
-    },
+    
+    // handleUpload(params) {
+    //   const file=params.file
+    //   this.form.filename=file.name
+    //   this.file=file
+    //   // this.$notify.info({
+    //   //   title: '提示',
+    //   //   dangerouslyUseHTMLString: true,
+    //   //   message: '<div style="color:#409EFF;"><i class="el-icon-loading"></i>上传中请耐心等待</div>',
+    //   //   showClose: false,
+    //   //   duration: 0
+    //   // });
+    //   // this.uploading = true
+    //   // const file = params.file
+    //   // const formData = new FormData()
+    //   // formData.append('file', file)
+    //   // uploadData(formData).then(res=>{
+    //   //   this.$notify.closeAll()
+    //   //   this.getTrainData()
+    //   // })
+    //   // uploadVerifySet(formData).then(res => {
+    //   //   //不管是否上传成功都关闭
+    //   //   this.$notify.closeAll()
+    //   //   const { code } = res.data
+    //   //   if (code == 1) {
+    //   //     this.uploading = false
+    //   //     this.$message.success('文件上传成功')
+    //   //     this.$refs.upload.clearFiles()
+    //   //   }
+    //   //   else {
+    //   //     this.$message.error('文件上传失败')
+    //   //   }
+    //   // })
+    // },
     //获取用上传的测试集
     getTestSetList() {
       const data = JSON.stringify({ begin: this.begin })
@@ -418,10 +466,20 @@ export default {
 
 </script>
 <style scoped>
+.file-container{
+  width:100%;
+  display: flex;
+}
 .info-container {
     width: 100%;
     height: 100%;
     display: flex;
+    .el-input{
+      width: 80%;
+    }
+    .el-button {
+      width: 20%;
+    }
 }
 
 .el-row .el-card {
@@ -444,7 +502,7 @@ ul {
   align-items: center;
 }
 
-.el-input {
+.search {
   width: 200px;
 }
 
@@ -489,4 +547,4 @@ ul {
   margin-top: 20px;
   text-align: center;
 }
-</style>@/api/data
+</style>

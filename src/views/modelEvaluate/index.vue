@@ -41,7 +41,7 @@
                 <span>混淆矩阵</span>
             </el-tooltip>
             <el-table :data="confusionMatrix" border style="width: 70%;margin-top:10px;">
-                <el-table-column :resizable="false" class-name="elChgTbeClmn" prop="label" label="" width="120">
+                <el-table-column :resizable="false" class-name="elChgTbeClmn" prop="label"  align="center" width="120">
                     <template slot="header" slot-scope="scope">
                         <div class="elHeadCon">
                             <div class="headerCon1">预测值</div>
@@ -49,82 +49,35 @@
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column label="0" align="center">
-                    <template slot-scope="scope">
-                        <div v-if="scope.row.label == '0'" style="color: #3081EA;">
-                            {{ scope.row.label0 }}
-                        </div>
-                        <div v-else>
-                            {{ scope.row.label0 }}
-                        </div>
-                    </template>
+                <el-table-column label="0" prop="col1" align="center">
                 </el-table-column>
-                <el-table-column label="1" align="center">
-                    <template slot-scope="scope">
-                        <div v-if="scope.row.label == '1'" style="color: #3081EA;">
-                            {{ scope.row.label1 }}
-                        </div>
-                        <div v-else>
-                            {{ scope.row.label1 }}
-                        </div>
-                    </template>
-                </el-table-column>
-                <el-table-column label="2" align="center">
-                    <template slot-scope="scope">
-                        <div v-if="scope.row.label == '2'" style="color: #3081EA;">
-                            {{ scope.row.label2 }}
-                        </div>
-                        <div v-else>
-                            {{ scope.row.label2 }}
-                        </div>
-                    </template>
-                </el-table-column>
-                <el-table-column label="3" align="center">
-                    <template slot-scope="scope">
-                        <div v-if="scope.row.label == '3'" style="color: #3081EA;">
-                            {{ scope.row.label3 }}
-                        </div>
-                        <div v-else>
-                            {{ scope.row.label3 }}
-                        </div>
-                    </template>
-                </el-table-column>
-                <el-table-column label="4" align="center">
-                    <template slot-scope="scope">
-                        <div v-if="scope.row.label == '4'" style="color: #3081EA;">
-                            {{ scope.row.label4 }}
-                        </div>
-                        <div v-else>
-                            {{ scope.row.label4 }}
-                        </div>
-                    </template>
-                </el-table-column>
-                <el-table-column label="5" align="center">
-                    <template slot-scope="scope">
-                        <div v-if="scope.row.label == '5'" style="color: #3081EA;">
-                            {{ scope.row.label5 }}
-                        </div>
-                        <div v-else>
-                            {{ scope.row.label5 }}
-                        </div>
-                    </template>
+                <el-table-column label="1" prop="col2" align="center">
                 </el-table-column>
             </el-table>
             <div style="margin-top:10px;">特征重要性</div>
-            <div id="feature" style="width: 700px;height: 400px;margin-top: -50px;"></div>
+            <div ref="feature" style="width: 700px;height: 400px;margin-top: -50px;"></div>
         </el-card>
     </div>
 </template>
 <script>
-import { getModelInfo } from '@/utils/modelInfo'
+import { evalModel } from '@/api/model'
+import {otherOption} from '@/views/components/echarts/data/echartsOption.d'
+import useCharts from '../components/echarts/chartsUse'
+
+const {chartsInit,setChartsOption }=useCharts()
 export default {
     mounted() {
+        const {savePth,testPth}=this.$route.params
+        this.savePth=savePth
+        this.testPth=testPth
         //初始化数据
-        this.initData()
+        this.$nextTick(()=>this.initData())
 
     },
     data() {
         return {
+            savePth:'',
+            testPth:'',
             accuracy: 0,
             f1: 0,
             precision: 0,
@@ -135,78 +88,52 @@ export default {
         }
     },
     methods: {
-        //初始化数据
-        initData() {
-            this.model = JSON.parse(getModelInfo())
-            const { accuracy, f1, recall, precision } = this.model.model_effect
-            this.accuracy = (parseFloat(accuracy) * 100).toFixed(2)
-            this.f1 = (parseFloat(f1) * 100).toFixed(2)
-            this.precision = (parseFloat(precision) * 100).toFixed(2)
-            this.recall = (parseFloat(recall) * 100).toFixed(2)
-            this.model.model_confusion_matrix = JSON.parse(this.model.model_confusion_matrix)
-            //重写混淆矩阵格式
-            this.model.model_confusion_matrix.forEach((item, index) => {
-                this.confusionMatrix.push({
-                    label: index,
-                    label0: (parseFloat(item[0]) * 100).toFixed(1) + '%',
-                    label1: (parseFloat(item[1]) * 100).toFixed(1) + '%',
-                    label2: (parseFloat(item[2]) * 100).toFixed(1) + '%',
-                    label3: (parseFloat(item[3]) * 100).toFixed(1) + '%',
-                    label4: (parseFloat(item[4]) * 100).toFixed(1) + '%',
-                    label5: (parseFloat(item[5]) * 100).toFixed(1) + '%',
+        /**
+        *
+        * @param
+        **/
+        initData(){
+            const data={
+                savePth:this.savePth,
+                testPth:this.testPth
+            }
+            evalModel(data).then(res=>{
+                const{acc_score,f1_score,recall_score,precision,feature_importances,confusion_matrix} =res.data
+                this.accuracy=parseFloat(acc_score).toFixed(2)*100
+                this.f1=parseFloat(f1_score).toFixed(2)*100
+                this.recall=parseFloat(recall_score).toFixed(2)*100
+                this.precision=parseFloat(precision).toFixed(2)*100
+                const y_data=[]
+                const s_data=[]
+                Object.keys(feature_importances).forEach(key=>{
+                    y_data.push(key)
+                    s_data.push(parseFloat(feature_importances[key]).toFixed(2))
                 })
-            })
-            //初始化特征重要性图表
-            this.feature = this.$echarts.init(document.getElementById('feature'))
-            this.model.model_importance = JSON.parse(this.model.model_importance)
-            const y_data = [], s_data = []
-            this.model.model_importance.forEach(item => {
-                y_data.push(item[0])
-                s_data.push(parseFloat(item[1]).toFixed(2))
-            })
-            console.log(s_data)
-            this.feature.setOption(this.getOption(y_data, s_data))
-        },
-        getOption(y_data, s_data) {
-            return {
-                color: '#528EFF',
-                tooltip: {
-                    trigger: 'axis',
-                    axisPointer: {
-                        type: 'shadow'
-                    }
-                },
-                legend: {},
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '3%',
-                    containLabel: true
-                },
-                xAxis: {
-                    type: 'value',
-                    boundaryGap: [0, 0.01]
-                },
-                yAxis: {
-                    type: 'category',
-                    data: y_data
-                },
-                series: [
-                    {
+                Object.assign(otherOption,{
+                    yAxis: {
+                        type: 'category',
+                         data: y_data
+                    },
+                    series: [{
                         type: 'bar',
                         data: s_data,
-                        // itemStyle: {
-                        //   nomal: {
                         label: {
                             show: true,
                             formatter: (params) => { return params.value + '%' },
                             position: 'right',
                         }
-                        //   }
-                        // }
-                    }
-                ]
-            }
+                    }]
+                })
+                chartsInit(this.$refs.feature,otherOption)
+                confusion_matrix.forEach((item,index)=>{
+                    this.confusionMatrix.push({
+                        label:index,
+                        col1:item[0],
+                        col2:item[1]
+                    })
+                })
+                console.log(this.confusionMatrix)
+            })
         },
         backToLastPage() {
             this.$router.push({ path: '/model/myModel' })

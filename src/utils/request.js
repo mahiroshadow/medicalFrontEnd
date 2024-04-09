@@ -3,12 +3,13 @@ import { MessageBox, Message } from 'element-ui'
 import store from '@/store'
 import { getToken } from '@/utils/auth'
 import baseURL from '@/env'
+import { baseURLProd } from '../env'
 // create an axios instance
 
 
 axios.defaults.headers['Content-Type'] = 'application/json'
 const service = axios.create({
-  baseURL: baseURL,
+  baseURL: baseURLProd,
   timeout: 5000 // request timeout
 })
 

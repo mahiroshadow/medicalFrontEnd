@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-
+import { prodBaseFlaskUrl,baseFlaskUrl} from '@/env'
 
 /**
 * 
@@ -47,10 +47,21 @@ const getAlgorithm=()=>{
         url:'/algorithm/getAlgorithmList',
     })
 }
-
+/**
+* 测试模型
+* @param
+**/
+const evalModel=(payload)=>{
+    return request({
+        baseURL:prodBaseFlaskUrl,
+        method:'POST',
+        url:'/nuistp/modelEvaluate',
+        data:payload
+    })
+}
 const modelTrain=(data)=>{
     return request({
-        baseURL:'http://10.15.143.248:8080',
+        baseURL:prodBaseFlaskUrl,
         method:'POST',
         data:data,
         url:'/nuistp/train',
@@ -64,5 +75,6 @@ export{
     queryModel,
     algorithmUpload,
     getAlgorithm,
-    modelTrain
+    modelTrain,
+    evalModel
 }

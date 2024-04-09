@@ -26,7 +26,7 @@
         </el-form-item>
         <el-form-item label="测试集选择" prop="testChoose" v-if="hasTest && algorithmType==0">
           <el-select v-model="model.testChoose" placeholder="请选择数据集">
-            <el-option v-for="item in trainList" :label="item.filename" :value="item.train_filepath"></el-option>
+            <el-option v-for="item in trainList" :label="item.file_name" :value="item.save_pth"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="镜像选择" prop="mirrorChoose">
@@ -72,7 +72,7 @@ export default {
         mirrorChoose:''
       },
       mirrorList:[
-        {name:'python3.8',value:'python3.8'},
+        {name:'python3.8',value:'python:3.8'},
       ],
       hasTest:false,
       modelList: [],
@@ -109,8 +109,8 @@ export default {
       if(this.algorithmType){
         data={
           algorithmSavePth:this.algorithmList[this.model.algorithmChoose].save_pth,
-          mirror:'python:3.8',
-          command:'python main.py',
+          mirror:this.model.mirrorChoose,
+          command:this.algorithmList[this.model.algorithmChoose].start_code,
           type:1
         }
       }
@@ -119,14 +119,18 @@ export default {
         const currTrainSet=this.trainList[this.model.trainChoose]
         data={
           trainSetSavePth:currTrainSet.save_pth,
-          newTrainSetSavePth:`/home/code/data.csv`,
-          mirror:'python:3.8',
-          command:`python main.py --path=/home/code/data.csv`,
+          newTrainSetSavePth:`/home/default/data_self.csv`,
+          mirror:this.model.mirrorChoose,
+          command:`python main.py --path=/home/default/data_self.csv`,
+          test_pth:this.model.testChoose,
           type:0
         }
       }
       console.log(data)
-      modelTrain(data).then(res=>console.log(res.data))
+      modelTrain(data).then()
+      this.$router.push({
+            name:'containerList',
+      })
     },
     resetForm() {
       
@@ -142,7 +146,7 @@ export default {
       const resList=await Promise.all([getAlgorithm(),getTrainData()])
       this.algorithmList=resList[0].data.algorithmList
       this.trainList=resList[1].data.trainList
-      
+      console.log(this.trainList)
     }
   }
 }

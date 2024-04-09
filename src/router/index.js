@@ -67,10 +67,11 @@ export const constantRoutes = [
         title: '数据处理',
         icon: 'deal'
       }
-    },{
+    },
+    {
       path: 'dataAnalysis',
       name: 'dataAnalysis',
-      component: () => import('@/views/data/dataAnalysis'),
+      component: () => import('@/views/data/dataAnalysisModify.vue'),
       meta: {
         title: '数据分析',
         icon: 'analysis'
@@ -110,12 +111,12 @@ export const constantRoutes = [
         name: 'myModel',
         meta: { title: '模型仓库' ,icon:'repositry'},
       },
-      {
-        path: 'validateModel',
-        component: () => import('@/views/model/validateModel/index'),
-        name: 'validateModel',
-        meta: { title: '外部数据验证',icon:'verify'}
-      },
+      // {
+      //   path: 'validateModel',
+      //   component: () => import('@/views/model/validateModel/index'),
+      //   name: 'validateModel',
+      //   meta: { title: '外部数据验证',icon:'verify'}
+      // },
       {
         path: 'evaluate',
         component: () => import('@/views/modelEvaluate/index'),
@@ -147,11 +148,21 @@ export const constantRoutes = [
   {
     name:'modelEvl',
     path:'/modelEvl',
-    component: () => import('@/views/modelEvaluate/index'),
+    component: Layout,
     meta:{
       title:'模型效果评估'
     },
-    hidden:true
+    hidden:true,
+    children:[
+      {
+        name:'modelEvlPage',
+        path:'modelEvlPage',
+        component: () => import('@/views/modelEvaluate/index'),
+        meta:{
+          title:'模型效果评估'
+        },
+      }
+    ]
   },
   { path: '*', redirect: '/404', hidden: true }
 ]

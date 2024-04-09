@@ -7,6 +7,9 @@
             :before-close="handleClose"
             label-width="80px">
             <el-form label-width="80px" v-if="switcher">
+                <el-form-item label="文件名称:">
+                    <el-input v-model="newFileName"></el-input>
+                </el-form-item>
                 <el-form-item label="填充方式:">
                     <el-radio-group v-model="fillType">
                         <el-radio label="zero">0填充</el-radio>
@@ -26,7 +29,7 @@
         </el-dialog>
         <el-card>
         <el-row :gutter="20">
-            <el-col :span="6" v-for="item in infoList">
+            <el-col :span="8" v-for="item in infoList">
                 <fileInfo style="height: 120px;" 
                             :name="item.name" 
                             :content="item.content"
@@ -84,8 +87,10 @@ export default {
         if (this.$route.params.id||this.$route.params.save_pth){
             this.fileId=this.$route.params.id
             this.fileSavePth=this.$route.params.save_pth
+            this.selected=this.fileId
         }
         this.csvShow()
+        
     },
     watch: {
         'load':(newVal,oldVal)=>{
@@ -97,6 +102,7 @@ export default {
     },
     data() {
         return {
+            newFileName:'',
             fileId:'',
             fileSavePth:'',
             csvData: [],
@@ -134,6 +140,12 @@ export default {
         * @param
         **/
         switchFile(){
+            if(!Array.isArray(this.options))
+                return
+            const {id,save_pth}=this.options.find(item=>item.id==this.selected)
+            console.log(id,save_pth)
+            this.fileId=id
+            this.fileSavePth=save_pth
             this.csvShow()
         },
         /**
@@ -147,7 +159,7 @@ export default {
         },
 
         dealFile(){
-            if(this.infoList[2].content=='含有'){
+            if(this.infoList[2].content=='不包含'){
                 this.$message.warning('文件已经填充')
                 return
             }
@@ -160,39 +172,51 @@ export default {
         **/
         async fillFileData(){
             this.dialogVisible=false
-
-            const data={
-                fillType:this.fillType,
-                filePth:this.fileSavePth
-            }
-            console.log(data)
-            const {status}=await (await fillFile(data)).data
-            if(status!=200){
-                this.$message.error('接口异常')
-                return
-            }
-            this.csvShow()
+            this.$confirm('文件是否保存?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(async () => {
+                const data={
+                    newFileName:this.newFileName,
+                    fillType:this.fillType,
+                    filePth:this.fileSavePth,
+                    id:this.fileId
+                }
+                console.log(data)
+                const {status}=await (await fillFile(data)).data
+                if(status!=200){
+                    this.$message.error('接口异常')
+                    return
+                }
+                this.csvShow()
+            }).catch(() => {
+                this.$message({
+                type: 'info',
+                message: '已取消保存'
+                });          
+            });
         },
+        
         /**
         * 显示csv中的数据
         * @param
         **/
         async csvShow() {
-            if(this.fileSavePth==''){
+            //如果下拉框没有数据先拉去数据
+            if(this.options.length==0){
                 const res=await (await getTrainData()).data
-                console.log(res)
-                const {status,trainList}=res
-                if(status==200)
-                {
-                    this.options=trainList
+                const {trainList}=res
+                this.options=trainList
+                //判断是否为页面跳转，非跳转则拉取第一个
+                if(this.fileId==''||this.fileSavePth==''){
+                    this.selected=trainList[0].id
                     this.fileSavePth=this.options[0].save_pth
                 }
-                else{
-                    this.$message.error('接口异常')
-                    return
-                }
             }
+
             const data={filePth:this.fileSavePth,begin:0,end:20}
+            console.log(data)
             const res1=await (await getFileDetialInfo(data)).data
             const res2=await (await readCsv(data)).data
             if(res1.status==200){
@@ -202,9 +226,11 @@ export default {
                 this.avg=res1.avg
             }
             else{
-                this.$message.error('文件未填充') 
+                // this.$message.error('文件未填充') 
             }
+            res1.basic.pop()
             this.infoList=res1.basic
+            console.log(this.infoList)
             if(res2.status==200){
                 this.dataColumn=res2.lines[0]
                 this.csvData=res2.lines.slice(1)

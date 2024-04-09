@@ -1,21 +1,15 @@
 <template>
   <div class="app-container">
-    <el-card>
-      <div class="title">
-        <div class="file-operation">
-          <el-select v-model="fileSelected" @change="getFileHeadCol" placeholder="请选择数据集">
+        <el-card class="custom-card">
+        <div class="data-selector">
+        <el-select v-model="fileSelected" @change="getFileHeadCol" placeholder="请选择数据集">
             <el-option 
               v-for="item in trainList"
               :label="item.file_name"
               :value="item.save_pth">
             </el-option>
-          </el-select>
-          <el-button type="primary" @click="">查看文件详情</el-button>
-          <el-button type="primary" @click="">更换数据集</el-button>
-        </div>
+        </el-select>
       </div>
-      <div>
-        <el-card class="custom-card">
         <el-tabs v-model="activeTab" @tab-click="handleTabClick">
           <el-tab-pane label="类空间变量分布">
             <span>请选择特征：</span><el-select 
@@ -51,8 +45,6 @@
         </el-tabs>
         <div ref="charts" class="charts"></div>
       </el-card>
-      </div>
-    </el-card>
   </div>
 </template>
 
@@ -154,7 +146,7 @@ export default {
             const option={series:[]}
             keys.forEach(key => {
                 option.series.push({
-                    symbolSize: 20,
+                    symbolSize: 4,
                     data:feature_distribution[key].data ,
                     type: 'scatter'
                 })
@@ -197,13 +189,18 @@ export default {
         const payload={
           save_pth:this.fileSelected
         }
-        const {pcaData}=await (await pca(payload)).data
-        console.log(pcaData)
-        const option={
+      const {pcaData,status}=await (await pca(payload)).data
+      console.log(pcaData)
+      console.log(status)
+      if(status!=200){
+        this.$router.push({name:'dataTreat'})
+        return
+      }
+      const option={
           dataset: {
             source: pcaData
-          }
-        }
+          }  
+      }
         setChartsOption(option,false)
       }
    }
@@ -212,11 +209,16 @@ export default {
 </script>
 
 
-<style scoped>
+<style lang="scss" scoped>
+
 .custom-card {
-  overflow-y: auto;  /* 启用垂直滚动条 */
-  max-height: 800px; /* 设置最大高度，超过这个高度将出现滚动条 */
-  /* 添加其他样式，如边框、背景颜色等，根据需要自定义 */
+  overflow-y: auto;  
+  max-height: 800px; 
+  position: relative;
+  .data-selector{
+      display: flex;
+      justify-content: flex-end;
+  }
 }
 
 ul {

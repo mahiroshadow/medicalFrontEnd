@@ -1,4 +1,4 @@
-import { prodBaseFlaskUrl,baseFlaskUrl } from '@/env'
+import baseURL, { prodBaseFlaskUrl,baseFlaskUrl } from '@/env'
 import requset from '@/utils/request'
 
 /**
@@ -31,16 +31,41 @@ const getImageList=()=>{
 const buildDockerImage=(payload)=>{
     return requset({
         method:'POST',
-        baseURL:prodBaseFlaskUrl,
+        baseURL:baseFlaskUrl,
         url:'/nuistp/buildImage',
         data:payload,
         timeout:1000*60
     })
 }
-
+/**
+* 删除容器
+* @param
+**/
+const deleteContainer=(payload)=>{
+    return requset({
+        baseURL:prodBaseFlaskUrl,
+        url:'/nuistp/deleteContainer',
+        method:'POST',
+        data:payload
+    })
+}
+/**
+*  获取日志
+* @param
+**/
+const getContainerLogsById=(payload)=>{
+    return requset({
+        baseURL:prodBaseFlaskUrl,
+        url:'/nuistp/containerLogs',
+        method:'POST',
+        data:payload
+    })
+}
 
 export{
     getContainerStatus,
     getImageList,
-    buildDockerImage
+    buildDockerImage,
+    deleteContainer,
+    getContainerLogsById
 }

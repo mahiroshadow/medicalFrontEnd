@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import { baseFlaskUrl } from '@/env'
+import { baseFlaskUrl ,prodBaseFlaskUrl} from '@/env'
 
 
 /**
@@ -9,7 +9,7 @@ import { baseFlaskUrl } from '@/env'
 const getOneFeatureDistribution=(data)=>{
     return request({
         method:'POST',
-        baseURL:baseFlaskUrl,
+        baseURL:prodBaseFlaskUrl,
         url:'/nuistp/getOneFeatureDistribution',
         data:data
     })
@@ -22,7 +22,7 @@ const getOneFeatureDistribution=(data)=>{
 const getFileHead=(data)=>{
     return request({
         method:'POST',
-        baseURL:baseFlaskUrl,
+        baseURL:prodBaseFlaskUrl,
         url:'/nuistp/getFileHead',
         data:data
     })
@@ -34,7 +34,7 @@ const getFileHead=(data)=>{
 **/
 const getOccupytion=(data)=>{
     return request({
-        baseURL:baseFlaskUrl,
+        baseURL:prodBaseFlaskUrl,
         url:'/nuistp/getOccupytion',
         method:'POST',
         data:data
@@ -48,7 +48,7 @@ const getOccupytion=(data)=>{
 const pca=(data)=>{
     return request({
         method:'POST',
-        baseURL:baseFlaskUrl,
+        baseURL:prodBaseFlaskUrl,
         url:'/nuistp/pca',
         data:data
     })

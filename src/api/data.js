@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import { baseFlaskUrl } from '@/env'
+import { baseFlaskUrl ,prodBaseFlaskUrl} from '@/env'
 
 
 
@@ -45,7 +45,7 @@ const readCsv=(data)=>{
 
 const getFileDetialInfo=(data)=>{
     return request({
-        baseURL:baseFlaskUrl,
+        baseURL:prodBaseFlaskUrl,
         method:'POST',
         url:'/nuistp/fileInfo',
         data:data
@@ -54,7 +54,7 @@ const getFileDetialInfo=(data)=>{
 
 const fillFile=(data)=>{
     return request({    
-        baseURL:baseFlaskUrl,
+        baseURL:prodBaseFlaskUrl,
         method:'POST',
         url:'/nuistp/fill',
         data:data
